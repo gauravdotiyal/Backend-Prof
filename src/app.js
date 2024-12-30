@@ -14,4 +14,12 @@ app.use(express.urlencoded({extended:true,limit:"16kb"}));
 app.use(express.static("public"));
 app.use(cookieParser())
 
+//routes import 
+import userRouter from './routes/user.routes.js'
+
+//declaring routes as middlewares 
+app.use("/api/v1/users",userRouter);
+// now url look like https:localhost:8000/api/v1/users/(login,register,etc)
+
+
 export  { app};

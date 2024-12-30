@@ -1,12 +1,13 @@
 // a wrapper func for reuse everywhere for promises
+//so that we dont want to write promises everywhere 
 const asyncHandler=(requestHandler)=>{
-   (req,res,next)=>{
+   return (req,res,next)=>{
       Promise.resolve(requestHandler(req,res,next)).catch((err)=>next(err))
    }
 };
 
 export {asyncHandler};
-
+ 
 // const asyncHandler =(func)=>{()=>{}} 
 // above line can also be written in some different WebAssembly
 // const asyncHandler =(fn)=> asyc()=>{}
