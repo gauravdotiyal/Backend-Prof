@@ -3,11 +3,26 @@ import {ApiError} from "../utils/ApiError.js";
 import {User} from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
- 
+
+// method to build access and refresh token 
+const generateAccessAndRefresTokens=async(userId)=>{
+    try {
+      const user=User.findOne(userId);
+      const accessToken=user.generateAccessToken();
+      const refreshToken=user.generateRefreshToken();
+
+      user.refreshToken=refreshToken;
+      user.save({validateBeforeSave: false});
+
+      return {accessToken,refreshToken};
+    } catch (error) {
+      throw new ApiError(500,"Something went wront while generating access and refresh token");
+    }
+}
 
 
 const registerUser = asyncHandler(async (req, res) => {
-  //get user details from fronend
+  // get user details from fronend
   // validation check - not empty
   // check if username already exists - email , username
   // check for images check for avatars - multer
@@ -77,5 +92,57 @@ const registerUser = asyncHandler(async (req, res) => {
   )
  
 }); 
+
+const loginUser=asyncHandler(async(req,res)=>{
+   // Get User details from req body
+   // Check them on DB if present or not - Find the user
+   // If not present then give message to register
+   // If present check password and username or email 
+   // Generate Access Token and Refresh Token
+   // Send Secure Cookies 
+
+   const {username,password,email} =req.body; 
+   if(!username || !email){
+     throw new ApiError(400,"Username and Email is required for Login");
+   }
+   
+   const user = await User.findOne({
+    $or:[{username}, {email}]
+   })
+   if(!user){
+    throw new ApiError(400,"User not existed in Database")
+   }
+
+   const isPasswordValid=await user.isPasswordValid(password);
+   if(!isPasswordValid){
+    throw new ApiError(400,"Invalid user Credentials");
+   }
+
+   const {accessToken,refreshToken}= await generateAccessAndRefresTokens(user._id);
+   
+   //But here the user doesnot have access and refresh token so first we have to again update it
+
+   const loggedUser=await User.findById(user._id).select("-password" , "-refreshToken");
+
+   //cookie options 
+   const options={
+      httpOnly:true,
+      secure:true,
+   }
+
+   //send cookie
+   return res.status(200)
+   .cookie("accessToken", accessToken,options)
+   .cookie("refreshToken",refreshToken,options)
+   .json(
+      new ApiResponse(200, {
+        user:loggedInUser,accessToken,refreshToken
+      },
+      "User Loggend In successfully"
+    )
+   )
+
+})
+
 
 export { registerUser };
