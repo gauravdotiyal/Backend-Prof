@@ -185,9 +185,9 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken=asyncHandler(async(req,res)=>{
-  const incomingRefreshToken=req.cookie.refreshToken || req.body.refreshToken;
 
-  if(!incomingRefreshToken){
+  const incomingRefreshToken=req.cookie.refreshToken || req.body.refreshToken;
+  if(!incomingRefreshToken){  
     throw new ApiError(401,"Unauthorized Request");
   }
    
@@ -225,6 +225,30 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
     throw new ApiError(401,error?.message || "Invalid Refresh Token")
   }
 
+
+})
+
+const changeCurrentPassword=asyncHandler(async(req,res)=>{
+   const {oldPassword,newPassword}=req.body;
+   if(oldPassword ===newPassword){
+     throw new ApiError(400,"Old Password and New Password cannot be same");
+   }
+   
+   const user =await User.findById(req.user._id);
+   if(!user){
+    throw new ApiError(400,"User not found");
+   }
+   const isPasswordCorrect=await user.isPasswordCorrect(oldPassword);
+   if(!isPasswordCorrect){
+     throw new ApiError(400,"Invalid Old Password");
+   }
+
+   user.password=newPassword;
+   await user.save({validateBeforeSave:false});
+
+   return res
+   .status(200)
+   .json(new ApiResponse(200,{},"Password Changed Successfully"));
 
 })
 
