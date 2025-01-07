@@ -264,7 +264,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Full Name and Email is required");
   }
 
-  const user =await User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -282,68 +282,134 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Account Details Updated Successfully"));
 });
 
-const updateUserAvatar=asyncHandler(async(req,res)=>{
-  const avatarFilePath=req.files?.path;
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarFilePath = req.files?.path;
 
-  if(!avatarFilePath){
-    throw new ApiError(400,"Avatar File is required");
+  if (!avatarFilePath) {
+    throw new ApiError(400, "Avatar File is required");
   }
-  
-  //we get the whole object from cloudinary get url from here 
-  const avatar =await uploadOnCloudinary(avatarFilePath);
-  if(!avatar.url){
-    throw new ApiError(400,"Error While Uploading on Avatar");
+
+  //delete the old avatar image = assignment
+
+  //we get the whole object from cloudinary get url from here
+  const avatar = await uploadOnCloudinary(avatarFilePath);
+  if (!avatar.url) {
+    throw new ApiError(400, "Error While Uploading on Avatar");
   }
-  
-  const user =await User.findByIdAndUpdate(
+
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
-      $set:{
-        avatar:avatar.url,
-      }
+      $set: {
+        avatar: avatar.url,
+      },
     },
     {
-      new:true,
+      new: true,
     }
-  ).select("-password")
-  
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avater Updated Successfully"));
+});
+
+const updataUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageFilePath = req.files?.path;
+  if (!coverImageFilePath) {
+    throw new ApiError(400, "Cover Image File is not Provided");
+  }
+
+  const coverImage = await uploadOnCloudinary(coverImageFilePath);
+  if (!coverImage.url) {
+    throw new ApiError(400, "Error While Uploading Cover Image");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover Image Updated Successfully"));
+});
+
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is required");
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username,
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscriberCount: {
+          $size: "$subscribers",
+        },
+        channelSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            $if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project:{
+        fullName:1,
+        username:1,
+        subscribersCount:1,
+        channelSubscribedToCount:1,
+        isSubscribed:1,
+        avatar:1,
+        coverImage:1,
+        email:1,
+      }
+    }
+  ]);
+
+  if(!channel?.length){
+    throw new ApiError(404,"Channel does not exist");
+  }
+
   return res 
    .status(200)
-   .json(
-     new ApiResponse(200,user,"Avater Updated Successfully")
-   )
-})
+   .json(new ApiResponse(200,channel[0],"Channel Profile Fetched Successfully"));
 
-const updataUserCoverImage=asyncHandler(async(req,res)=>{
-  const coverImageFilePath=req.files?.path;
-  if(!coverImageFilePath){
-    throw new ApiError(400,"Cover Image File is not Provided");
-  }
-
-  const coverImage=await uploadOnCloudinary(coverImageFilePath);
-  if (!coverImage.url){
-    throw new ApiError(400,"Error While Uploading Cover Image");
-  }  
-
-  const user=await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set:{
-        coverImage:coverImage.url,
-      }
-    },
-    {
-      new:true,
-    }
-  ).select("-password")
-  
-  return res 
-  .status(200)
-  .json(
-    new ApiResponse(200,user,"Cover Image Updated Successfully")
-  )
-
-})
+});
 
 export {
   registerUser,
@@ -355,4 +421,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updataUserCoverImage,
+  getUserChannelProfile,
 };
