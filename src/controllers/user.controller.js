@@ -275,7 +275,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     {
       new: true,
     }
-  ).select("-password ");
+  ).select("-password");
 
   return res
     .status(200)
@@ -435,7 +435,7 @@ const getWatchHistory=asyncHandler(async(req,res)=>{
               localField:"owner",
               foreignField:"_id",
               as:"owner",
-              pipeline;[
+              pipeline:[
                 {
                   $project:{
                     fullName:1,
