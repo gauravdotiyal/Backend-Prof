@@ -355,6 +355,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       },
     },
     {
+      //for checking how many subscribers a channel have 
       $lookup: {
         from: "subscriptions",
         localField: "_id",
@@ -363,6 +364,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       },
     },
     {
+      //to check how many channels a user has subscribed to
       $lookup: {
         from: "subscriptions",
         localField: "_id",
@@ -411,6 +413,57 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
 });
 
+const getWatchHistory=asyncHandler(async(req,res)=>{
+
+  const user=User.aggregate([
+    {
+      $match:{
+        _id:new mongoose.Types.objectId(req.user._id)
+      }
+    },
+    {
+      $lookup:{
+        from:"videos",
+        localField:"watchHistory",
+        foreignField:"_id",
+        as:"watchHistory",
+        //Using nested pipeline from videos to user
+        pipeline:[
+          {
+            $lookup:{
+              from:"users",
+              localField:"owner",
+              foreignField:"_id",
+              as:"owner",
+              pipeline;[
+                {
+                  $project:{
+                    fullName:1,
+                    username:1,
+                    avatar:1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            $addFields:{
+              owner:{
+                $first:"$owner"
+              }
+            }
+          }
+        ]
+      }
+    }
+
+  ])
+
+  return res
+   .status(200)
+   .json(new ApiResponse(200,user[0].watchHistory,"Watch History Fetched Successfully "))
+})
+
 export {
   registerUser,
   loginUser,
@@ -422,4 +475,5 @@ export {
   updateUserAvatar,
   updataUserCoverImage,
   getUserChannelProfile,
+  getWatchHistory,
 };
