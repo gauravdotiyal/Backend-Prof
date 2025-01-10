@@ -17,6 +17,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
+//authentication routes 
 router.route("/register").post(
   upload.fields([
     {
@@ -29,8 +30,7 @@ router.route("/register").post(
     },
   ]),
   registerUser
-);
-
+); 
 router.route("/login").post(loginUser);
 
 //secured Routes
