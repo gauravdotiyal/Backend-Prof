@@ -1,6 +1,6 @@
 # Bakend with Gaurav
 
-This is Backend Learning and Practicing 
+Comprehensive MERN Stack Revision
 
 ## **Features**
 
@@ -24,3 +24,19 @@ This is Backend Learning and Practicing
 - **Bcrypt**: Password hashing.  
 - **Dotenv**: Manage environment variables.  
 - **Cors**: Enable CORS for API.  
+
+
+
+## **Contributing**
+
+Contributions are welcome!  
+
+1. Fork the repository.  
+2. Create a new branch.  
+3. Commit your changes.  
+4. Push to your branch.  
+5. Create a pull request.  
+
+---
+
+*Happy Coding!* 🎉
