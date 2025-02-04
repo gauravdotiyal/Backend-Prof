@@ -1,14 +1,11 @@
 import mongoose, {Schema} from "mongoose"
 
-const subscriptionSchema=new mongoose.Schema({
-    subscriber:{
-       type:Schema.Types.ObjectId,
-       ref:"User",
-    },
-    channel:{
-        type:Schema.Types.ObjectId,
-        ref:"User",
-    }
+const likeSchema=new mongoose.Schema({
+        username:{
+             type:String,
+             requiredL:true,  
+        },
+
 },{timestamps:true});
 
-export const Subscription=mongoose.model("Subscription", subscriptionSchema);
+export const Like=mongoose.model("Like", likeSchema);
